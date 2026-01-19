@@ -92,8 +92,10 @@ export const CodeBlock = memo(({ code, language }: CodeBlockProps) => {
         <div className="relative p-0 overflow-x-auto custom-scrollbar">
           <div
             className={`p-6 text-sm font-mono leading-relaxed [&>pre]:bg-transparent! transition-opacity duration-700 ${
-              !isLoaded ? "opacity-0" : "opacity-100"
-            }`}
+              !language || ["text", "plaintext", "txt"].includes(language)
+                ? "[&_.shiki]:text-muted-foreground [&_span]:text-muted-foreground"
+                : ""
+            } ${!isLoaded ? "opacity-0" : "opacity-100"}`}
           >
             <div dangerouslySetInnerHTML={{ __html: html }} />
           </div>
