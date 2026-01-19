@@ -14,14 +14,21 @@ interface CodeBlockProps {
 export const CodeBlock = memo(({ code, language }: CodeBlockProps) => {
   const { appTheme } = useTheme();
   const cacheKey = `${appTheme}-${language}-${code}`;
-  const [html, setHtml] = useState<string>(highlightCache.get(cacheKey) || "");
+  // Initialize with fallback to prevent layout shift
+  const [html, setHtml] = useState<string>(
+    highlightCache.get(cacheKey) ||
+      `<pre class="shiki font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground bg-transparent! p-0 m-0 border-0"><code>${code}</code></pre>`,
+  );
+
   const [copied, setCopied] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(!!highlightCache.get(cacheKey));
 
   useEffect(() => {
-    // 即使已经加载，如果主题变了且缓存没命中，也需要重新高亮
-    if (html && highlightCache.has(cacheKey)) {
-      setHtml(highlightCache.get(cacheKey)!);
+    // If cached, just update state
+    if (highlightCache.has(cacheKey)) {
+      const cached = highlightCache.get(cacheKey)!;
+      if (html !== cached) {
+        setHtml(cached);
+      }
       return;
     }
 
@@ -37,15 +44,10 @@ export const CodeBlock = memo(({ code, language }: CodeBlockProps) => {
         if (mounted) {
           highlightCache.set(cacheKey, highlighted);
           setHtml(highlighted);
-          setIsLoaded(true);
         }
       } catch (e) {
         console.error("Shiki failed to load:", e);
-        if (mounted) {
-          const fallback = `<pre class="font-mono text-sm whitespace-pre-wrap">${code}</pre>`;
-          setHtml(fallback);
-          setIsLoaded(true);
-        }
+        // Fallback is already rendered
       }
     }
 
@@ -91,20 +93,14 @@ export const CodeBlock = memo(({ code, language }: CodeBlockProps) => {
         {/* Code Area */}
         <div className="relative p-0 overflow-x-auto custom-scrollbar">
           <div
-            className={`p-6 text-sm font-mono leading-relaxed [&>pre]:bg-transparent! transition-opacity duration-700 bg-zinc-50 dark:bg-zinc-900 rounded-b-sm ${
+            className={`p-6 text-sm font-mono leading-relaxed [&>pre]:bg-transparent! transition-opacity duration-300 bg-zinc-50 dark:bg-zinc-900 rounded-b-sm ${
               !language || ["text", "plaintext", "txt"].includes(language)
                 ? "[&_.shiki]:text-muted-foreground [&_span]:text-muted-foreground"
                 : ""
-            } ${!isLoaded ? "opacity-0" : "opacity-100"}`}
+            }`}
           >
             <div dangerouslySetInnerHTML={{ __html: html }} />
           </div>
-
-          {!isLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center min-h-20">
-              <div className="w-4 h-4 border border-border border-t-foreground/50 rounded-full animate-spin"></div>
-            </div>
-          )}
         </div>
       </div>
     </div>
