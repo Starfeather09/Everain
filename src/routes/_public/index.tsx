@@ -23,16 +23,12 @@ function App() {
       <section className="space-y-8">
         <header className="space-y-6">
           <h1 className="text-4xl md:text-5xl font-serif font-medium tracking-tight text-foreground flex items-center gap-4">
-            你好
+            Bloom into Everain.
           </h1>
 
           <div className="space-y-4 max-w-2xl text-base md:text-lg text-muted-foreground font-light leading-relaxed">
             <p>
-              我是{" "}
-              <span className="text-foreground font-medium">
-                {blogConfig.author}
-              </span>
-              ，{blogConfig.description}
+             {blogConfig.description}
             </p>
           </div>
         </header>
