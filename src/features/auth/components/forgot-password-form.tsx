@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { Turnstile, useTurnstile } from "@/components/common/turnstile";
 import { authClient } from "@/lib/auth/auth.client";
 
 const forgotPasswordSchema = z.object({
@@ -20,6 +21,12 @@ export function ForgotPasswordForm() {
   const [sentEmail, setSentEmail] = useState("");
 
   const {
+    isPending: turnstilePending,
+    token: turnstileToken,
+    turnstileProps,
+  } = useTurnstile("forgot-password");
+
+  const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -31,6 +38,9 @@ export function ForgotPasswordForm() {
     const { error } = await authClient.requestPasswordReset({
       email: data.email,
       redirectTo: `${window.location.origin}/reset-link`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
 
     if (error) {
@@ -72,6 +82,7 @@ export function ForgotPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <Turnstile {...turnstileProps} />
       <p className="text-sm text-muted-foreground/60 font-light leading-relaxed">
         请输入您的注册邮箱，我们将向您发送重置密码的链接。
       </p>
@@ -98,7 +109,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-4">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || turnstilePending}
           className="w-full py-4 bg-foreground text-background text-[10px] font-mono uppercase tracking-[0.3em] hover:opacity-80 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
         >
           {isSubmitting ? (

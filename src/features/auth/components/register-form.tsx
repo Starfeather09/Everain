@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { Turnstile, useTurnstile } from "@/components/common/turnstile";
 import { usePreviousLocation } from "@/hooks/use-previous-location";
 import { authClient } from "@/lib/auth/auth.client";
 import { AUTH_KEYS } from "@/features/auth/queries";
@@ -31,6 +32,11 @@ export function RegisterForm() {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const previousLocation = usePreviousLocation();
   const queryClient = useQueryClient();
+  const {
+    isPending: turnstilePending,
+    token: turnstileToken,
+    turnstileProps,
+  } = useTurnstile("register");
 
   const {
     register,
@@ -46,6 +52,9 @@ export function RegisterForm() {
       password: data.password,
       name: data.name,
       callbackURL: `${window.location.origin}/verify-email`,
+      fetchOptions: {
+        headers: { "X-Turnstile-Token": turnstileToken || "" },
+      },
     });
 
     if (error) {
@@ -96,6 +105,7 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <Turnstile {...turnstileProps} />
       <div className="space-y-6">
         {/* Name */}
         <div className="space-y-2 group">
@@ -172,7 +182,7 @@ export function RegisterForm() {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || turnstilePending}
         className="w-full py-4 bg-foreground text-background text-[10px] font-mono uppercase tracking-[0.3em] hover:opacity-80 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
       >
         {isSubmitting ? (

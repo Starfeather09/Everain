@@ -6,6 +6,7 @@ import {
   cacheMiddleware,
   rateLimitMiddleware,
   shieldMiddleware,
+  turnstileMiddleware,
 } from "./middlewares";
 import { createRateLimiterIdentifier } from "./helper";
 import { handleImageRequest } from "@/features/media/media.service";
@@ -75,27 +76,24 @@ app.get("/images/:key{.+}", async (c) => {
   }
 });
 
-app.get(
-  "/api/auth/*",
-  baseMiddleware,
-  rateLimitMiddleware({
-    capacity: 100,
-    interval: "1m",
-    identifier: createRateLimiterIdentifier,
-  }),
-  (c) => {
-    const auth = c.get("auth");
-    return auth.handler(c.req.raw);
-  },
-);
+app.get("/api/auth/*", baseMiddleware, (c) => {
+  const auth = c.get("auth");
+  return auth.handler(c.req.raw);
+});
 
 app.post(
   "/api/auth/*",
   baseMiddleware,
+  turnstileMiddleware,
   rateLimitMiddleware({
-    capacity: 10,
+    capacity: 5,
     interval: "1m",
     identifier: createRateLimiterIdentifier,
+  }),
+  rateLimitMiddleware({
+    capacity: 10,
+    interval: "1h",
+    identifier: (c) => `hourly:${createRateLimiterIdentifier(c)}`,
   }),
   (c) => {
     const auth = c.get("auth");
